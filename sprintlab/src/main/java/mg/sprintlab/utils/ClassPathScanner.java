@@ -1,0 +1,81 @@
+package mg.sprintlab.utils;
+
+import java.io.File;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ClassPathScanner {
+    private List<Class<?>> classes = new ArrayList<>();
+    private static final String ERR_STR = "Error occurred while getting root path ";
+
+public List<Class<?>> getClasses(String targetPackage) {
+        classes = new ArrayList<>();
+        String targetPackagePath = targetPackage.replace(".", File.separator);
+        ClassLoader classLoader = ClassPathScanner.class.getClassLoader();
+        URL resourceURL = classLoader.getResource(targetPackagePath);
+        try {
+            URI resource = resourceURL.toURI();
+            File rootDirectory = new File(resource);
+            String rootDirectoryPath;
+            if (targetPackage.trim().isEmpty()) {
+                rootDirectoryPath = rootDirectory.getPath() + File.separator;
+            } else {
+                rootDirectoryPath = getRootPath();
+            }
+            findClass(rootDirectory.listFiles(), rootDirectoryPath);
+        } catch (Exception e) {
+            System.err.println(ERR_STR +"[GetClass] :"+ e.getMessage());
+        }
+        return classes;
+    }
+
+    private static String getRootPath() {
+        String baseName = "";
+        ClassLoader cl = ClassPathScanner.class.getClassLoader();
+        URL baseUrl = cl.getResource("");
+        try {
+            URI basePath = baseUrl.toURI();
+            baseName = basePath.getPath();
+            baseName = baseName.replace("/", File.separator);
+            baseName = baseName.substring(1);
+        } catch (Exception e) {
+            System.err.println(ERR_STR +"[GetRootPath] :"+ e.getMessage());
+            
+        }
+        return baseName;
+    }
+
+    /**
+     * Do a recursive search of all .class file for getting all class of the
+     * package to scan
+     * 
+     * @param toAnalyze         The list of element of the parent element to scan
+     * @param rootDirectoryPath The root directory of the project for removing it
+     *                          from the class url
+     */
+    public void findClass(File[] toAnalyze, String rootDirectoryPath) {
+        if (toAnalyze == null)
+            return;
+        for (File file : toAnalyze) {
+            if (file.isDirectory()) {
+                findClass(file.listFiles(), rootDirectoryPath);
+
+            } else if (file.getName().endsWith(".class")) {
+                String temp = file.getPath();
+                String className = temp.replace(rootDirectoryPath, "")
+                        .replace(File.separator, ".")
+                        .replace(".class", "");
+                        className = className.substring(1);
+                try {
+                    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                    System.out.println(className);
+                    classes.add(Class.forName(className, true, cl));
+                } catch (Exception e) {
+                    System.err.println(ERR_STR +"[FindClass] :"+ e.getMessage());
+                }
+            }
+        }
+    }
+}
