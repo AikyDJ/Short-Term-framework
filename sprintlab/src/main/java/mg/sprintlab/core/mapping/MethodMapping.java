@@ -37,6 +37,13 @@ public class MethodMapping {
     public void setHttpMethode(HTTPMethode httpMethode) {
         this.httpMethode = httpMethode;
     }
+    public Object executeMethod(){
+        try {
+            return method.invoke(controllerClass.getDeclaredConstructor().newInstance());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to execute method: " + method.getName() + " in controller: " + controllerClass.getName(), e);
+        }
+    }
 
     private String debugLog() {
         StringBuilder sb = new StringBuilder();
