@@ -1,6 +1,7 @@
 package mg.sprintlab.core.mapping;
 
 import mg.sprintlab.annotation.MapUrl;
+import mg.sprintlab.annotation.enums.HTTPMethode;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public class RouteMapping {
         methodMap.setControllerClass(controller);
         methodMap.setPathToFile(path);
         methodMap.setMethod(method);
+        methodMap.setHttpMethode(urlMethod);
         return methodMap;
     }
 }
