@@ -1,0 +1,53 @@
+package mg.sprintlab.core.mapping;
+
+import java.lang.reflect.Method;
+
+import mg.sprintlab.annotation.enums.HTTPMethode;
+
+/*
+ * Mapping class that holds information about a controller method, including the controller class, the path to the file, the method itself, and the HTTP method (GET or POST).
+ */
+public class MethodMapping {
+    private Class<?> controllerClass;
+    private String pathToFile;
+    private Method method;
+
+    public Class<?> getControllerClass() {
+        return controllerClass;
+    }
+    public void setControllerClass(Class<?> controllerClass) {
+        this.controllerClass = controllerClass;
+    }
+    public String getPathToFile() {
+        return pathToFile;
+    }
+    public void setPathToFile(String pathToFile) {
+        this.pathToFile = pathToFile;
+    }
+    public Method getMethod() {
+        return method;
+    }
+    public void setMethod(Method method) {
+        this.method = method;
+    }
+
+    private String debugLog() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Controller Class: ").append(controllerClass.getName()).append("\n");
+        sb.append("Path to File: ").append(pathToFile).append("\n");
+        sb.append("Method: ").append(method.getName()).append("\n");
+
+        // list all methods of the controller class
+        sb.append("Methods in Controller Class: \n");
+        for (Method m : controllerClass.getDeclaredMethods()) {
+            sb.append(" - ").append(m.getName()).append("\n");
+        }
+
+        return sb.toString();
+    }
+    @Override
+    public String toString() {
+        return debugLog();
+    }
+
+}
