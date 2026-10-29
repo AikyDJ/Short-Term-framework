@@ -12,8 +12,7 @@ public class RouteMapping {
     private RouteMapping() {
     }
 
-    public static Map<UrlInfo, MethodMapping> scanAndBuildMapping(List<Class<?>> controllerList) {
-        Map<UrlInfo, MethodMapping> methodMap = new HashMap<>();
+    public static void scanAndBuildMapping(Map<UrlInfo, MethodMapping> routeMapper, List<Class<?>> controllerList) {
         for (Class<?> controller : controllerList) {
             Method[] methods = controller.getDeclaredMethods();
             for (Method toAnalyze : methods) {
@@ -21,11 +20,10 @@ public class RouteMapping {
                     MapUrl urlAn = toAnalyze.getAnnotation(MapUrl.class);
                     String path = urlAn.path();
                     HTTPMethode urlMethod = urlAn.methode();
-                    methodMap.put(new UrlInfo(path, urlMethod), buildMapping(toAnalyze, controller, path, urlMethod));
+                    routeMapper.put(new UrlInfo(path, urlMethod), buildMapping(toAnalyze, controller, path, urlMethod));
                 }
             }
         }
-        return methodMap;
     }
 
     public static MethodMapping buildMapping(Method method, Class<?> controller, String path, HTTPMethode urlMethod) {
