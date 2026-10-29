@@ -44,8 +44,8 @@ public class MainController extends HttpServlet {
     public void init() throws ServletException {
         routesMapping = (Map<UrlInfo, MethodMapping>) getServletContext().getAttribute(AppInitializer.ROUTE_MAPPER);
         viewDispatcher = (ViewDispach) getServletContext().getAttribute(AppInitializer.VIEW_DISPATCHER);
-        Object debugModeObj = getInitParameter(AppInitializer.DEBUG_MODE_PARAM) ;
-        debugMode = debugModeObj != null ;
+        Object debugModeObj = getServletContext().getAttribute(AppInitializer.DEBUG_MODE_PARAM);
+        debugMode = Boolean.TRUE.equals(debugModeObj);
         System.out.println("[FRAMEWORK] MainController initialized with debugMode = " + debugMode);
     }
 

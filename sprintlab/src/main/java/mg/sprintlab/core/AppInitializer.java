@@ -32,7 +32,10 @@ public class AppInitializer implements ServletContextListener {
 
         
         context.setAttribute(LIST_CLASS, getControllerClassList(context));
-        // context.setAttribute(DEBUG_MODE_PARAM, true);
+        String configuredDebugMode = context.getInitParameter(DEBUG_MODE_PARAM);
+        context.setAttribute(
+                DEBUG_MODE_PARAM,
+                configuredDebugMode != null && Boolean.parseBoolean(configuredDebugMode.trim()));
         
         
         
