@@ -61,9 +61,10 @@ public class Url extends HttpServlet {
                 UrlInfo urlInfo = entry.getKey();
                 MethodMapping methodMapping = entry.getValue();
                 if (urlInfo.getRoute().equals(path)
-                        && request.getMethod().equalsIgnoreCase(urlInfo.getHttpMethode().name())
-                    ) {
+                        && request.getMethod().equalsIgnoreCase(urlInfo.getHttpMethode().name())) {
                     out.println(methodMapping.toString());
+                    out.println("---------------[EXECUTE]---------------");
+                    out.println(methodMapping.executeMethod());
                 }
             }
         }
