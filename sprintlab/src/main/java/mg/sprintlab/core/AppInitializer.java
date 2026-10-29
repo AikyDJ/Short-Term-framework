@@ -1,11 +1,17 @@
 package mg.sprintlab.core;
 
 import mg.sprintlab.annotation.Controller;
+import mg.sprintlab.core.mapping.MethodMapping;
+import mg.sprintlab.core.mapping.RouteMapping;
+import mg.sprintlab.core.mapping.UrlInfo;
 import mg.sprintlab.utils.ClassPathScanner;
+import mg.sprintlab.web.ViewDispach;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.servlet.ServletContext;
@@ -16,11 +22,36 @@ public class AppInitializer implements ServletContextListener {
     public static final String PACKAGE_LIST_PARAM = "package_list";
     public static final String LIST_SEPARATOR_PARAM = "list_separator";
     public static final String LIST_CLASS = "list_class";
+    public static final String DEBUG_MODE_PARAM = "debug_mode";
+    public static final String ROUTE_MAPPER = "route_mapper";
+    public static final String VIEW_DISPATCHER = "view_dispatcher";
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
         ServletContext context = event.getServletContext();
+
+        
         context.setAttribute(LIST_CLASS, getControllerClassList(context));
+        String configuredDebugMode = context.getInitParameter(DEBUG_MODE_PARAM);
+        context.setAttribute(
+                DEBUG_MODE_PARAM,
+                configuredDebugMode != null && Boolean.parseBoolean(configuredDebugMode.trim()));
+        
+        
+        
+        Map<UrlInfo, MethodMapping> routesMapping = new HashMap<>();
+
+        List<Class<?>> uniqueClassList = getControllerClassList(context);
+        RouteMapping.scanAndBuildMapping(routesMapping , uniqueClassList);
+        context.setAttribute(ROUTE_MAPPER, routesMapping);
+
+        // Initialize the view dispatcher
+        String suffix = context.getInitParameter("view_suffix");
+        String prefix = context.getInitParameter("view_prefix");
+        ViewDispach viewDispatcher = new ViewDispach();
+        viewDispatcher.setSuffix(suffix);
+        viewDispatcher.setPrefix(prefix);
+        context.setAttribute(VIEW_DISPATCHER, viewDispatcher);
     }
 
     public List<Class<?>> getControllerClassList() {
