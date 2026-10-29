@@ -11,6 +11,7 @@ public class MethodMapping {
     private Class<?> controllerClass;
     private String pathToFile;
     private Method method;
+    private HTTPMethode httpMethode;
 
     public Class<?> getControllerClass() {
         return controllerClass;
@@ -30,12 +31,19 @@ public class MethodMapping {
     public void setMethod(Method method) {
         this.method = method;
     }
+    public HTTPMethode getHttpMethode() {
+        return httpMethode;
+    }
+    public void setHttpMethode(HTTPMethode httpMethode) {
+        this.httpMethode = httpMethode;
+    }
 
     private String debugLog() {
         StringBuilder sb = new StringBuilder();
         sb.append("Controller Class: ").append(controllerClass.getName()).append("\n");
         sb.append("Path to File: ").append(pathToFile).append("\n");
         sb.append("Method: ").append(method.getName()).append("\n");
+        sb.append("HTTP Method: ").append(httpMethode).append("\n");
 
         // list all methods of the controller class
         sb.append("Methods in Controller Class: \n");

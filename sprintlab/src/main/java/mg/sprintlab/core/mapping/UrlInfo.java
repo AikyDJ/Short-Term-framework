@@ -3,7 +3,21 @@ package mg.sprintlab.core.mapping;
 import mg.sprintlab.annotation.enums.*;
 
 public class UrlInfo {
+    HTTPMethode httpMethode;
     String route;
+
+    public UrlInfo(String path, HTTPMethode urlMethod) {
+        this.route = path;
+        this.httpMethode = urlMethod == null ? HTTPMethode.GET : urlMethod;
+    }
+
+    public HTTPMethode getHttpMethode() {
+        return httpMethode;
+    }
+
+    public void setHttpMethode(HTTPMethode httpMethode) {
+        this.httpMethode = httpMethode == null ? HTTPMethode.GET : httpMethode;
+    }
 
     public String getRoute() {
         return route;
