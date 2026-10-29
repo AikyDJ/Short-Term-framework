@@ -1,4 +1,4 @@
-package mg.sprintlab.controller;
+package mg.sprintlab.web;
 
 import mg.sprintlab.utils.UrlUtils;
 import mg.sprintlab.core.AppInitializer;
@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class Url extends HttpServlet {
+public class MainController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
