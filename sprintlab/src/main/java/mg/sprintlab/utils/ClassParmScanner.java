@@ -6,6 +6,7 @@ import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +14,10 @@ import jakarta.servlet.http.HttpSession;
 import mg.sprintlab.annotation.RequestParam;
 
 public class ClassParmScanner {
+
+    private static final Set<Class<?>> WRAPPERS = Set.of(
+            Integer.class, Double.class, Float.class, Long.class,
+            Short.class, Byte.class, Boolean.class, Character.class);
 
     private ClassParmScanner() {
         // private constructor to prevent instantiation
@@ -45,6 +50,13 @@ public class ClassParmScanner {
         String name = (definedName != null && !definedName.value().trim().isEmpty()) ? definedName.value()
                 : parameter.getName();
 
+        //  not a simple type -> an object (or a List/Set) built by ObjectHandler
+        // from the parameters "name.field"
+        if (!isSimpleType(parameter.getType())) {
+            Object value = ObjectHandler.read(name, parameter.getType(), parameter.getParameterizedType(), request);
+            return value == ObjectHandler.NOT_SET ? null : value;
+        }
+
         String[] values = request.getParameterValues(name);
 
         if (values == null || values.length == 0
@@ -59,7 +71,27 @@ public class ClassParmScanner {
         }
         return parseParameter(values, parameter.getType());
     }
-        private static Object parseParameter(String[] values, Class<?> goal) {
+
+    /**
+     * true for the types that can be built from one text: String, primitives and their wrappers,
+     * BigDecimal, LocalDate, LocalDateTime, Date, enums, and arrays of those.
+     * (package visible: ObjectHandler uses it too)
+     */
+    static boolean isSimpleType(Class<?> type) {
+        if (type.isArray()) {
+            return isSimpleType(type.componentType());
+        }
+        return type.isPrimitive()
+                || type == String.class
+                || type == BigDecimal.class
+                || type == LocalDate.class
+                || type == LocalDateTime.class
+                || type == java.util.Date.class
+                || type.isEnum()
+                || WRAPPERS.contains(type);
+    }
+
+    static Object parseParameter(String[] values, Class<?> goal) {
         if (goal.isArray()) {
             Class<?> componentType = goal.componentType();
 
@@ -76,7 +108,8 @@ public class ClassParmScanner {
         return parseParameter(values[0], goal);
     }
 
-    private static Object parseParameter(String value, Class<?> goal) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    static Object parseParameter(String value, Class<?> goal) {
         String trimmed = value.trim();
 
         if (goal == String.class) {
@@ -112,6 +145,8 @@ public class ClassParmScanner {
                 throw new IllegalArgumentException("Impossible to convert : '" + value + "' into a char");
             }
             return trimmed.charAt(0);
+        } else if (goal.isEnum()) {
+            return Enum.valueOf((Class) goal, trimmed);
         } else {
             throw new IllegalArgumentException("Unsupported type : " + goal.getName());
         }
