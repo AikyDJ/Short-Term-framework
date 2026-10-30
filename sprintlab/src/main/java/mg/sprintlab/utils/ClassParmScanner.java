@@ -57,7 +57,23 @@ public class ClassParmScanner {
             }
             return null;
         }
-        return parseParameter(name, parameter.getType());
+        return parseParameter(values, parameter.getType());
+    }
+        private static Object parseParameter(String[] values, Class<?> goal) {
+        if (goal.isArray()) {
+            Class<?> componentType = goal.componentType();
+
+            String[] effectiveValues = (values.length == 1 && values[0].contains(","))
+                    ? values[0].split("\\s*,\\s*")
+                    : values;
+
+            Object toReturn = Array.newInstance(componentType, effectiveValues.length);
+            for (int i = 0; i < effectiveValues.length; i++) {
+                Array.set(toReturn, i, parseParameter(effectiveValues[i], componentType));
+            }
+            return toReturn;
+        }
+        return parseParameter(values[0], goal);
     }
 
     private static Object parseParameter(String value, Class<?> goal) {
