@@ -1,5 +1,6 @@
 package mg.sprintlab.utils;
 
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -11,7 +12,9 @@ import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 import mg.sprintlab.annotation.RequestParam;
+import mg.sprintlab.core.mapping.FileMapping;
 
 public class ClassParmScanner {
 
@@ -50,7 +53,14 @@ public class ClassParmScanner {
         String name = (definedName != null && !definedName.value().trim().isEmpty()) ? definedName.value()
                 : parameter.getName();
 
-        //  not a simple type -> an object (or a List/Set) built by ObjectHandler
+        if (parameter.getType() == FileMapping.class) {
+            try {
+                return manageFile(request.getPart(name));
+            } catch (Exception e) {
+                // e.printStackTrace();
+            }
+        }
+        // not a simple type -> an object (or a List/Set) built by ObjectHandler
         // from the parameters "name.field"
         if (!isSimpleType(parameter.getType())) {
             Object value = ObjectHandler.read(name, parameter.getType(), parameter.getParameterizedType(), request);
@@ -72,8 +82,24 @@ public class ClassParmScanner {
         return parseParameter(values, parameter.getType());
     }
 
+    private static FileMapping manageFile(Part filepart) {
+        FileMapping fileMapping = new FileMapping();
+
+        fileMapping.setFilename(filepart.getSubmittedFileName());
+        fileMapping.setMimeType(filepart.getContentType());
+
+        try (InputStream data = filepart.getInputStream()) {
+            fileMapping.setData(data.readAllBytes());
+        } catch (Exception e) {
+            // e.printStackTrace();
+        }
+
+        return fileMapping;
+    }
+
     /**
-     * true for the types that can be built from one text: String, primitives and their wrappers,
+     * true for the types that can be built from one text: String, primitives and
+     * their wrappers,
      * BigDecimal, LocalDate, LocalDateTime, Date, enums, and arrays of those.
      * (package visible: ObjectHandler uses it too)
      */
