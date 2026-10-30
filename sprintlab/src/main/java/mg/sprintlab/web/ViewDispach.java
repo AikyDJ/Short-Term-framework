@@ -45,9 +45,21 @@ public class ViewDispach {
     }
 
     private String buildTargetView(String view) {
-        StringBuilder pathBuilder = new StringBuilder(prefix);
-        pathBuilder.append(view);
-        pathBuilder.append(suffix);
+        String configuredPrefix = prefix == null ? "" : prefix;
+        String configuredSuffix = suffix == null ? "" : suffix;
+        String configuredView = view == null ? "" : view;
+
+        StringBuilder pathBuilder = new StringBuilder(configuredPrefix);
+        if (pathBuilder.isEmpty() || pathBuilder.charAt(0) != '/') {
+            pathBuilder.insert(0, '/');
+        }
+        if (pathBuilder.length() > 1
+                && pathBuilder.charAt(pathBuilder.length() - 1) == '/'
+                && configuredView.startsWith("/")) {
+            configuredView = configuredView.substring(1);
+        }
+        pathBuilder.append(configuredView);
+        pathBuilder.append(configuredSuffix);
         return pathBuilder.toString();
     }
 
