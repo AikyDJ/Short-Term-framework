@@ -96,6 +96,11 @@ public class MainController extends HttpServlet {
                     out.println(methodMapping.executeMethod());
                 }
             }
+            out.println("---------------[PARAMETERS]---------------");
+            for (String pa : request.getParameterValues("debug")) {
+                out.println("parameter: debug | values: " + pa);
+                out.println("Value: " + request.getParameter(pa));
+            }
         }
     }
 }
