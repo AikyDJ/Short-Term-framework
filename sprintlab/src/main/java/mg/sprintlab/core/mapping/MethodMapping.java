@@ -12,7 +12,14 @@ public class MethodMapping {
     private String pathToFile;
     private Method method;
     private HTTPMethode httpMethode;
+    private boolean isJson;
 
+    public boolean isJson() {
+        return isJson;
+    }
+    public void setJson(boolean isJson) {
+        this.isJson = isJson;
+    }
     public Class<?> getControllerClass() {
         return controllerClass;
     }
@@ -51,7 +58,8 @@ public class MethodMapping {
         sb.append("Path to File: ").append(pathToFile).append("\n");
         sb.append("Method: ").append(method.getName()).append("\n");
         sb.append("HTTP Method: ").append(httpMethode).append("\n");
-
+        String jsonstate = isJson ? " Active ": "";
+        sb.append("REST Status:").append(jsonstate).append("\n");
         // list all methods of the controller class
         sb.append("Methods in Controller Class: \n");
         for (Method m : controllerClass.getDeclaredMethods()) {
