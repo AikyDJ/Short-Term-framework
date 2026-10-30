@@ -2,6 +2,8 @@ package mg.sprintlab.core.mapping;
 
 import java.lang.reflect.Method;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import mg.sprintlab.annotation.enums.HTTPMethode;
 
 /*
@@ -44,11 +46,13 @@ public class MethodMapping {
     public void setHttpMethode(HTTPMethode httpMethode) {
         this.httpMethode = httpMethode;
     }
-    public Object executeMethod(){
+    public Object executeMethod(HttpServletRequest request, HttpServletResponse response) {
         try {
-            return method.invoke(controllerClass.getDeclaredConstructor().newInstance());
+            
+            Object[] args = mg.sprintlab.utils.ClassParmScanner.getMethodArgs(method, request, response);
+            return method.invoke(controllerClass.getDeclaredConstructor().newInstance(), args);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to execute method: " + method.getName() + " in controller: " + controllerClass.getName(), e);
+            throw new RuntimeException("Failed to execute method: " + method.getName() + " in controller: " + controllerClass.getName() + " - " + e.getMessage(), e);
         }
     }
 
