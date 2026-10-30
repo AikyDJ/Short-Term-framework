@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +21,7 @@ public class MainController extends HttpServlet {
     private Map<UrlInfo, MethodMapping> routesMapping;
     private ViewDispach viewDispatcher;
     private boolean debugMode;
+    private ObjectWriter ow;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -46,6 +49,7 @@ public class MainController extends HttpServlet {
         viewDispatcher = (ViewDispach) getServletContext().getAttribute(AppInitializer.VIEW_DISPATCHER);
         Object debugModeObj = getServletContext().getAttribute(AppInitializer.DEBUG_MODE_PARAM);
         debugMode = Boolean.TRUE.equals(debugModeObj);
+        ow = (ObjectWriter) getServletContext().getAttribute(AppInitializer.OBJ_WRITER);
         System.out.println("[FRAMEWORK] MainController initialized with debugMode = " + debugMode);
     }
 
@@ -60,10 +64,16 @@ public class MainController extends HttpServlet {
         if (routesMapping.containsKey(urlInfo)) {
             MethodMapping methodMapping = routesMapping.get(urlInfo);
             //
-            Object modelView = methodMapping.executeMethod();
-            if (modelView instanceof ModelView m) {
+            Object viewresp = methodMapping.executeMethod();
+            if (viewresp instanceof ModelView m) {
                 viewDispatcher.render(m, request, response);
+            } else if (viewresp instanceof String s) {
+                viewDispatcher.render(new ModelView(s), request, response);
+            } else if (methodMapping.isJson()) {
+                response.setContentType("application/json");
+                response.getOutputStream().println(ow.writeValueAsString(methodMapping.executeMethod()));
             }
+
         }
 
     }

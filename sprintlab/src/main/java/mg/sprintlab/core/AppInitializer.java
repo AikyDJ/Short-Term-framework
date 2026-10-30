@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -25,25 +30,30 @@ public class AppInitializer implements ServletContextListener {
     public static final String DEBUG_MODE_PARAM = "debug_mode";
     public static final String ROUTE_MAPPER = "route_mapper";
     public static final String VIEW_DISPATCHER = "view_dispatcher";
+    public static final String OBJ_WRITER = "objectWriter";
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
         ServletContext context = event.getServletContext();
 
-        
         context.setAttribute(LIST_CLASS, getControllerClassList(context));
         String configuredDebugMode = context.getInitParameter(DEBUG_MODE_PARAM);
         context.setAttribute(
                 DEBUG_MODE_PARAM,
                 configuredDebugMode != null && Boolean.parseBoolean(configuredDebugMode.trim()));
-        
-        
-        
+
         Map<UrlInfo, MethodMapping> routesMapping = new HashMap<>();
 
         List<Class<?>> uniqueClassList = getControllerClassList(context);
-        RouteMapping.scanAndBuildMapping(routesMapping , uniqueClassList);
+        RouteMapping.scanAndBuildMapping(routesMapping, uniqueClassList);
         context.setAttribute(ROUTE_MAPPER, routesMapping);
+
+        ObjectWriter writer = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .writer()
+                .withDefaultPrettyPrinter();
+        context.setAttribute(OBJ_WRITER, writer);
 
         // Initialize the view dispatcher
         String suffix = context.getInitParameter("view_suffix");
