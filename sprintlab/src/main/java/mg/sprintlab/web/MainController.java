@@ -1,6 +1,7 @@
 package mg.sprintlab.web;
 
 import mg.sprintlab.utils.UrlUtils;
+import mg.sprintlab.utils.JsonConvertor;
 import mg.sprintlab.core.AppInitializer;
 import mg.sprintlab.core.mapping.MethodMapping;
 import mg.sprintlab.core.mapping.UrlInfo;
@@ -8,8 +9,6 @@ import mg.sprintlab.core.mapping.UrlInfo;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
-
-import com.fasterxml.jackson.databind.ObjectWriter;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -21,7 +20,7 @@ public class MainController extends HttpServlet {
     private Map<UrlInfo, MethodMapping> routesMapping;
     private ViewDispach viewDispatcher;
     private boolean debugMode;
-    private ObjectWriter ow;
+    private JsonConvertor jsonConvertor;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -49,7 +48,7 @@ public class MainController extends HttpServlet {
         viewDispatcher = (ViewDispach) getServletContext().getAttribute(AppInitializer.VIEW_DISPATCHER);
         Object debugModeObj = getServletContext().getAttribute(AppInitializer.DEBUG_MODE_PARAM);
         debugMode = Boolean.TRUE.equals(debugModeObj);
-        ow = (ObjectWriter) getServletContext().getAttribute(AppInitializer.OBJ_WRITER);
+        jsonConvertor = (JsonConvertor) getServletContext().getAttribute(AppInitializer.JSON_CONVERTOR);
         System.out.println("[FRAMEWORK] MainController initialized with debugMode = " + debugMode);
     }
 
@@ -63,15 +62,14 @@ public class MainController extends HttpServlet {
         UrlInfo urlInfo = new UrlInfo(path, null);
         if (routesMapping.containsKey(urlInfo)) {
             MethodMapping methodMapping = routesMapping.get(urlInfo);
-            //
-            Object viewresp = methodMapping.executeMethod();
-            if (viewresp instanceof ModelView m) {
+            Object viewresp = methodMapping.executeMethod(request, response);
+            if (methodMapping.isJson()) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().println(jsonConvertor.toJson(viewresp));
+            } else if (viewresp instanceof ModelView m) {
                 viewDispatcher.render(m, request, response);
             } else if (viewresp instanceof String s) {
                 viewDispatcher.render(new ModelView(s), request, response);
-            } else if (methodMapping.isJson()) {
-                response.setContentType("application/json");
-                response.getOutputStream().println(ow.writeValueAsString(methodMapping.executeMethod()));
             }
 
         }
@@ -93,7 +91,7 @@ public class MainController extends HttpServlet {
                         && request.getMethod().equalsIgnoreCase(urlInfo.getHttpMethode().name())) {
                     out.println(methodMapping.toString());
                     out.println("---------------[EXECUTE]---------------");
-                    out.println(methodMapping.executeMethod());
+                    out.println(methodMapping.executeMethod(request, response));
                 }
             }
         }
