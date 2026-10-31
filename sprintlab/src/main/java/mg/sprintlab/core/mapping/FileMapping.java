@@ -5,11 +5,19 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 public class FileMapping {
+    private static final String DEFAULT_UPLOAD_DIRECTORY = "/tmp/uploads";
+    private static String uploadDirectory = DEFAULT_UPLOAD_DIRECTORY;
+
     private String filename;
     private String mimeType;
     private String targetDirectory = "";
-    private final String uploadDirectory = "/tmp/uploads";
     private byte[] data;
+
+    public static void configureUploadDirectory(String directory) {
+        if (directory != null && !directory.isBlank()) {
+            uploadDirectory = directory.trim();
+        }
+    }
 
 
     private void generateName() {

@@ -1,6 +1,7 @@
 package mg.sprintlab.core;
 
 import mg.sprintlab.annotation.Controller;
+import mg.sprintlab.core.mapping.FileMapping;
 import mg.sprintlab.core.mapping.MethodMapping;
 import mg.sprintlab.core.mapping.RouteMapping;
 import mg.sprintlab.core.mapping.UrlInfo;
@@ -27,11 +28,13 @@ public class AppInitializer implements ServletContextListener {
     public static final String ROUTE_MAPPER = "route_mapper";
     public static final String VIEW_DISPATCHER = "view_dispatcher";
     public static final String JSON_CONVERTOR = "json_convertor";
+    public static final String UPLOAD_DIRECTORY_PARAM = "upload_directory";
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
         ServletContext context = event.getServletContext();
 
+        FileMapping.configureUploadDirectory(context.getInitParameter(UPLOAD_DIRECTORY_PARAM));
         context.setAttribute(LIST_CLASS, getControllerClassList(context));
         String configuredDebugMode = context.getInitParameter(DEBUG_MODE_PARAM);
         context.setAttribute(
