@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import mg.sprintlab.annotation.RequestParam;
 import mg.sprintlab.core.mapping.FileMapping;
+import mg.sprintlab.web.Session;
 
 public class ClassParmScanner {
 
@@ -46,7 +47,9 @@ public class ClassParmScanner {
         } else if (HttpServletResponse.class.isAssignableFrom(parameter.getType())) {
             return response;
         } else if (HttpSession.class.isAssignableFrom(parameter.getType())) {
-            return request.getSession();
+            return new Session(request);
+        } else if (Session.class.isAssignableFrom(parameter.getType())) {
+            return new Session(request);
         }
 
         RequestParam definedName = parameter.getAnnotation(RequestParam.class);

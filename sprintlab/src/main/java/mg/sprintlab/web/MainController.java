@@ -2,6 +2,7 @@ package mg.sprintlab.web;
 
 import mg.sprintlab.utils.UrlUtils;
 import mg.sprintlab.utils.JsonConvertor;
+import mg.sprintlab.annotation.enums.HTTPMethode;
 import mg.sprintlab.core.AppInitializer;
 import mg.sprintlab.core.mapping.MethodMapping;
 import mg.sprintlab.core.mapping.UrlInfo;
@@ -24,7 +25,6 @@ public class MainController extends HttpServlet {
     private ViewDispach viewDispatcher;
     private boolean debugMode;
     private JsonConvertor jsonConvertor;
-    private String sessionStringAttr = AppInitializer.SESSION_ATTRIBUTE;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -47,65 +47,57 @@ public class MainController extends HttpServlet {
     }
 
     @Override
-    @SuppressWarnings ("unchecked")
+    @SuppressWarnings("unchecked")
     public void init() throws ServletException {
         routesMapping = (Map<UrlInfo, MethodMapping>) getServletContext().getAttribute(AppInitializer.ROUTE_MAPPER);
         viewDispatcher = (ViewDispach) getServletContext().getAttribute(AppInitializer.VIEW_DISPATCHER);
         Object debugModeObj = getServletContext().getAttribute(AppInitializer.DEBUG_MODE_PARAM);
         debugMode = Boolean.TRUE.equals(debugModeObj);
         jsonConvertor = (JsonConvertor) getServletContext().getAttribute(AppInitializer.JSON_CONVERTOR);
-        sessionStringAttr = (String) getServletContext().getAttribute(AppInitializer.SESSION_ATTRIBUTE);
         System.out.println("[FRAMEWORK] MainController initialized with debugMode = " + debugMode);
     }
 
-        private boolean setSession(HttpSession session) {
-        try {
-            Session source = (Session) session.getAttribute(sessionStringAttr);
-            if(source == null) return false;
-
-            List<String> attributeNames = Collections.list(session.getAttributeNames());
-
-            for(String attribute : attributeNames){
-                if(!source.getAttributes().containsKey(attribute)){
-                    session.removeAttribute(attribute);
-                }
-            }
-
-            source.getAttributes().forEach((key , value) -> {
-                System.out.println(key);
-                session.setAttribute(key,value);
-            });
-            return true;
-        } catch (Exception e){
-            System.err.println("Error occurred while synchronizing session: " + e.getMessage());
-        }
-        return false;
-    }
-
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String path = UrlUtils.normalize(request.getRequestURI().substring(request.getContextPath().length()));
-        if (debugMode) {
-            response.setContentType("text/plain;charset=UTF-8");
-            debug(path, request, response);
-        }
-        //
-        setSession(request.getSession());
-        UrlInfo urlInfo = new UrlInfo(path, null);
-        if (routesMapping.containsKey(urlInfo)) {
-            MethodMapping methodMapping = routesMapping.get(urlInfo);
-            Object viewresp = methodMapping.executeMethod(request, response);
-            if (methodMapping.isJson()) {
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().println(jsonConvertor.toJson(viewresp));
-            } else if (viewresp instanceof ModelView m) {
-                viewDispatcher.render(m, request, response);
-            } else if (viewresp instanceof String s) {
-                viewDispatcher.render(new ModelView(s), request, response);
-            }
+    request.setCharacterEncoding("UTF-8");
+    String path = UrlUtils.normalize(request.getRequestURI().substring(request.getContextPath().length()));
 
-        }
-
+    if (debugMode) {
+        response.setContentType("text/plain;charset=UTF-8");
+        debug(path, request, response);
     }
+
+    HTTPMethode httpMethode;
+    try {
+        httpMethode = HTTPMethode.valueOf(request.getMethod().toUpperCase());
+    } catch (IllegalArgumentException e) {
+        response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, request.getMethod());
+        return;
+    }
+
+    MethodMapping methodMapping = routesMapping.get(new UrlInfo(path, httpMethode));
+    if (methodMapping == null) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                "No route for " + request.getMethod() + " " + path);
+        return;
+    }
+
+    try {
+        Object viewresp = methodMapping.executeMethod(request, response);
+        if (methodMapping.isJson()) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().println(jsonConvertor.toJson(viewresp));
+        } else if (viewresp instanceof ModelView m) {
+            viewDispatcher.render(m, request, response);
+        } else if (viewresp instanceof String s) {
+            viewDispatcher.render(new ModelView(s), request, response);
+        }
+    } catch (Exception e) {
+        log("Error while processing request", e);
+        if (!response.isCommitted()) {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+}
 
     private void debug(String path, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -115,13 +107,6 @@ public class MainController extends HttpServlet {
         try (PrintWriter out = response.getWriter()) {
             out.println("\nRequested Path: " + path);
             out.println("Mapped Methods:");
-            if (setSession(request.getSession())){
-                out.println("Session synchronized successfully.");
-                out.println("Session ID: " + request.getSession().getId());
-                out.println("Session latest accessed time: " + request.getSession().getLastAccessedTime());
-            } else {
-                out.println("No session to synchronize or synchronization failed.");
-            }
             out.println("-------------------------------");
             for (Map.Entry<UrlInfo, MethodMapping> entry : mappings.entrySet()) {
                 UrlInfo urlInfo = entry.getKey();
