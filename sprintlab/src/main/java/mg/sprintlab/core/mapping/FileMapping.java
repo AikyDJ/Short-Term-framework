@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
+import mg.sprintlab.exception.FilePersistenceException;
+
 public class FileMapping {
     private static final String DEFAULT_UPLOAD_DIRECTORY = "/tmp/uploads";
     private static String uploadDirectory = DEFAULT_UPLOAD_DIRECTORY;
@@ -39,7 +41,7 @@ public class FileMapping {
 
     public void persistFile() {
         if( data == null){
-            throw new RuntimeException("No data in the file");
+            throw new FilePersistenceException("No data in the file");
         }
         
         generateName();
@@ -57,7 +59,8 @@ public class FileMapping {
 
             System.out.println("Does this work bro");
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
+            throw new FilePersistenceException("Error while persisting file", 500);
         }
     }
 
