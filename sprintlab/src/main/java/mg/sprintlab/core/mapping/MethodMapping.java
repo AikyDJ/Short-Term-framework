@@ -74,7 +74,7 @@ public class MethodMapping {
                 boolean authorized = false;
                 
                 for (String role : roles) {
-                    if (role.equals(userRole)) {
+                    if (role.contains(userRole)) {
                         authorized = true;
                         break;
                     }

@@ -97,7 +97,7 @@ public class MainController extends HttpServlet {
         } catch (Exception e) {
             log("Error while processing request", e);
             if (e.getClass().equals(AuthException.class)) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+                response.sendError(AuthException.getErrorCode(), e.getMessage());
             }
             if (!response.isCommitted()) {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());

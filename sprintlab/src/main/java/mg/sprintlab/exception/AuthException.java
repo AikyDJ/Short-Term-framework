@@ -2,6 +2,10 @@ package mg.sprintlab.exception;
 
 public class AuthException extends RuntimeException {
     private static final int ERROR_CODE = 401;
+    
+    public static int getErrorCode() {
+        return ERROR_CODE;
+    }
     private static final String ERROR_MESSAGE = "not authorized to access this resource";
 
     public AuthException() {
@@ -14,5 +18,6 @@ public class AuthException extends RuntimeException {
     public AuthException(String message, int errorCode) {
         super(errorCode + ": " + message);
     }
+    
     
 }
