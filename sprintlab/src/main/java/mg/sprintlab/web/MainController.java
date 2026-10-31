@@ -8,12 +8,15 @@ import mg.sprintlab.core.mapping.UrlInfo;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 public class MainController extends HttpServlet {
 
@@ -22,6 +25,7 @@ public class MainController extends HttpServlet {
     private boolean debugMode;
     private JsonConvertor jsonConvertor;
 
+    private String sessionStringAttr = AppInitializer.SESSION_ATTRIBUTE;
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // GET
@@ -49,7 +53,30 @@ public class MainController extends HttpServlet {
         Object debugModeObj = getServletContext().getAttribute(AppInitializer.DEBUG_MODE_PARAM);
         debugMode = Boolean.TRUE.equals(debugModeObj);
         jsonConvertor = (JsonConvertor) getServletContext().getAttribute(AppInitializer.JSON_CONVERTOR);
+        sessionStringAttr = (String) getServletContext().getAttribute(AppInitializer.SESSION_ATTRIBUTE);
         System.out.println("[FRAMEWORK] MainController initialized with debugMode = " + debugMode);
+    }
+
+        private void setSession(HttpSession session) {
+        try {
+            Session source = (Session) session.getAttribute(sessionStringAttr);
+            if(source == null) return;
+
+            List<String> attributeNames = Collections.list(session.getAttributeNames());
+
+            for(String attribute : attributeNames){
+                if(!source.getAttributes().containsKey(attribute)){
+                    session.removeAttribute(attribute);
+                }
+            }
+
+            source.getAttributes().forEach((key , value) -> {
+                System.out.println(key);
+                session.setAttribute(key,value);
+            });
+        } catch (Exception e){
+            System.err.println("Error occurred while synchronizing session: " + e.getMessage());
+        }
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -59,6 +86,7 @@ public class MainController extends HttpServlet {
             debug(path, request, response);
         }
         //
+        setSession(request.getSession());
         UrlInfo urlInfo = new UrlInfo(path, null);
         if (routesMapping.containsKey(urlInfo)) {
             MethodMapping methodMapping = routesMapping.get(urlInfo);

@@ -29,7 +29,7 @@ public class AppInitializer implements ServletContextListener {
     public static final String VIEW_DISPATCHER = "view_dispatcher";
     public static final String JSON_CONVERTOR = "json_convertor";
     public static final String UPLOAD_DIRECTORY_PARAM = "upload_directory";
-
+    public static final String SESSION_ATTRIBUTE = "attribute.session.name";
     @Override
     public void contextInitialized(ServletContextEvent event) {
         ServletContext context = event.getServletContext();
