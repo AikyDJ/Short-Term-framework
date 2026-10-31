@@ -1,5 +1,6 @@
 package mg.sprintlab.core.mapping;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -85,6 +86,15 @@ public class MethodMapping {
             }
             Object[] args = mg.sprintlab.utils.ClassParmScanner.getMethodArgs(method, request, response);
             return method.invoke(controllerClass.getDeclaredConstructor().newInstance(), args);
+        } catch (AuthException e) {
+            throw e;
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof AuthException authException) {
+                throw authException;
+            }
+            Throwable cause = e.getCause() == null ? e : e.getCause();
+            throw new RuntimeException("Failed to execute method: " + method.getName()
+                    + " in controller: " + controllerClass.getName() + " - " + cause.getMessage(), cause);
         } catch (Exception e) {
             throw new RuntimeException("Failed to execute method: " + method.getName() + " in controller: " + controllerClass.getName() + " - " + e.getMessage(), e);
         }
