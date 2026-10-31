@@ -24,6 +24,14 @@ import jakarta.servlet.http.HttpSession;
 public class Session {
 
     private final HttpServletRequest request;
+    private String role = "USER"; // default role for the session, can be modified as needed
+
+    public String getRole() {
+        return role;
+    }
+    public void setRole(String role) {
+        this.role = role;
+    }
 
     public Session(HttpServletRequest request) {
         this.request = Objects.requireNonNull(request, "request");

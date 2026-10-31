@@ -86,10 +86,6 @@ public class MainController extends HttpServlet {
 
             Object viewresp = methodMapping.executeMethod(request, response);
 
-            if (methodMapping.isAuthRequired()) {
-                throw new AuthException("Authentication required for this route.");
-            }
-
             if (methodMapping.isJson()) {
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().println(jsonConvertor.toJson(viewresp));

@@ -21,16 +21,27 @@ public class RouteMapping {
                     MapUrl urlAn = toAnalyze.getAnnotation(MapUrl.class);
                     String path = urlAn.path();
                     HTTPMethode urlMethod = urlAn.methode();
+
+                    boolean isJson = toAnalyze.isAnnotationPresent(RequestBody.class);
+                    boolean isAuthRequired = toAnalyze.isAnnotationPresent(Auth.class);
+                    String[] authorizeRoles = new String[0];
+                    
+                    if (isAuthRequired) {
+                        Auth authAn = toAnalyze.getAnnotation(Auth.class);
+                        authorizeRoles = authAn.roles();
+                    }
                     routeMapper.put(new UrlInfo(path, urlMethod), buildMapping(toAnalyze, controller, path, urlMethod
-                        ,toAnalyze.isAnnotationPresent(RequestBody.class)
-                        ,toAnalyze.isAnnotationPresent(Auth.class)
+                        ,isJson
+                        ,isAuthRequired
+                        ,authorizeRoles
                     ));
+
                 }
             }
         }
     }
 
-    public static MethodMapping buildMapping(Method method, Class<?> controller, String path, HTTPMethode urlMethod,boolean isJson, boolean isAuthRequired) {
+    public static MethodMapping buildMapping(Method method, Class<?> controller, String path, HTTPMethode urlMethod,boolean isJson, boolean isAuthRequired, String[] authorizeRoles) {
         MethodMapping methodMap = new MethodMapping();
         methodMap.setControllerClass(controller);
         methodMap.setPathToFile(path);

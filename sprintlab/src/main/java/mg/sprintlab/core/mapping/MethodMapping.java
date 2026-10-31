@@ -4,7 +4,10 @@ import java.lang.reflect.Method;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.sprintlab.annotation.Auth;
 import mg.sprintlab.annotation.enums.HTTPMethode;
+import mg.sprintlab.exception.AuthException;
+import mg.sprintlab.web.Session;
 
 /*
  * Mapping class that holds information about a controller method, including the controller class, the path to the file, the method itself, and the HTTP method (GET or POST).
@@ -16,7 +19,14 @@ public class MethodMapping {
     private HTTPMethode httpMethode;
     private boolean isJson;
     private boolean isAuthRequired;
+    private String[] authorizeRoles;
     
+    public String[] getAuthorizeRoles() {
+        return authorizeRoles;
+    }
+    public void setAuthorizeRoles(String[] authorizeRoles) {
+        this.authorizeRoles = authorizeRoles;
+    }
     public boolean isAuthRequired() {
         return isAuthRequired;
     }
@@ -55,7 +65,24 @@ public class MethodMapping {
     }
     public Object executeMethod(HttpServletRequest request, HttpServletResponse response) {
         try {
-            
+            if (method.isAnnotationPresent(Auth.class)) {
+                Auth authAn = method.getAnnotation(Auth.class);
+                String[] roles = authAn.roles();
+                // get roles from session
+                Session session = new Session(request);
+                String userRole = session.getRole();
+                boolean authorized = false;
+                
+                for (String role : roles) {
+                    if (role.equals(userRole)) {
+                        authorized = true;
+                        break;
+                    }
+                }
+                if (!authorized) {
+                    throw new AuthException("User is not authorized to access this resource",403);
+                }
+            }
             Object[] args = mg.sprintlab.utils.ClassParmScanner.getMethodArgs(method, request, response);
             return method.invoke(controllerClass.getDeclaredConstructor().newInstance(), args);
         } catch (Exception e) {
