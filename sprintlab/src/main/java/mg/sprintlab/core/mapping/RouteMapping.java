@@ -1,5 +1,6 @@
 package mg.sprintlab.core.mapping;
 
+import mg.sprintlab.annotation.Auth;
 import mg.sprintlab.annotation.MapUrl;
 import mg.sprintlab.annotation.RequestBody;
 import mg.sprintlab.annotation.enums.HTTPMethode;
@@ -20,19 +21,23 @@ public class RouteMapping {
                     MapUrl urlAn = toAnalyze.getAnnotation(MapUrl.class);
                     String path = urlAn.path();
                     HTTPMethode urlMethod = urlAn.methode();
-                    routeMapper.put(new UrlInfo(path, urlMethod), buildMapping(toAnalyze, controller, path, urlMethod,toAnalyze.isAnnotationPresent(RequestBody.class)));
+                    routeMapper.put(new UrlInfo(path, urlMethod), buildMapping(toAnalyze, controller, path, urlMethod
+                        ,toAnalyze.isAnnotationPresent(RequestBody.class)
+                        ,toAnalyze.isAnnotationPresent(Auth.class)
+                    ));
                 }
             }
         }
     }
 
-    public static MethodMapping buildMapping(Method method, Class<?> controller, String path, HTTPMethode urlMethod,boolean isJson) {
+    public static MethodMapping buildMapping(Method method, Class<?> controller, String path, HTTPMethode urlMethod,boolean isJson, boolean isAuthRequired) {
         MethodMapping methodMap = new MethodMapping();
         methodMap.setControllerClass(controller);
         methodMap.setPathToFile(path);
         methodMap.setMethod(method);
         methodMap.setHttpMethode(urlMethod);
         methodMap.setJson(isJson);
+        methodMap.setAuthRequired(isAuthRequired);
         return methodMap;
     }
 }

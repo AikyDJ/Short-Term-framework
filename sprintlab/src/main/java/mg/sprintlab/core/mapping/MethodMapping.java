@@ -15,7 +15,14 @@ public class MethodMapping {
     private Method method;
     private HTTPMethode httpMethode;
     private boolean isJson;
-
+    private boolean isAuthRequired;
+    
+    public boolean isAuthRequired() {
+        return isAuthRequired;
+    }
+    public void setAuthRequired(boolean isAuthRequired) {
+        this.isAuthRequired = isAuthRequired;
+    }
     public boolean isJson() {
         return isJson;
     }
