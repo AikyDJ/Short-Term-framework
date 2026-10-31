@@ -25,7 +25,7 @@ public class MainController extends HttpServlet {
     private boolean debugMode;
     private JsonConvertor jsonConvertor;
     private String sessionStringAttr = AppInitializer.SESSION_ATTRIBUTE;
-    
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // GET
@@ -58,10 +58,10 @@ public class MainController extends HttpServlet {
         System.out.println("[FRAMEWORK] MainController initialized with debugMode = " + debugMode);
     }
 
-        private void setSession(HttpSession session) {
+        private boolean setSession(HttpSession session) {
         try {
             Session source = (Session) session.getAttribute(sessionStringAttr);
-            if(source == null) return;
+            if(source == null) return false;
 
             List<String> attributeNames = Collections.list(session.getAttributeNames());
 
@@ -75,9 +75,11 @@ public class MainController extends HttpServlet {
                 System.out.println(key);
                 session.setAttribute(key,value);
             });
+            return true;
         } catch (Exception e){
             System.err.println("Error occurred while synchronizing session: " + e.getMessage());
         }
+        return false;
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -113,6 +115,14 @@ public class MainController extends HttpServlet {
         try (PrintWriter out = response.getWriter()) {
             out.println("\nRequested Path: " + path);
             out.println("Mapped Methods:");
+            if (setSession(request.getSession())){
+                out.println("Session synchronized successfully.");
+                out.println("Session ID: " + request.getSession().getId());
+                out.println("Session latest accessed time: " + request.getSession().getLastAccessedTime());
+            } else {
+                out.println("No session to synchronize or synchronization failed.");
+            }
+            out.println("-------------------------------");
             for (Map.Entry<UrlInfo, MethodMapping> entry : mappings.entrySet()) {
                 UrlInfo urlInfo = entry.getKey();
                 MethodMapping methodMapping = entry.getValue();
