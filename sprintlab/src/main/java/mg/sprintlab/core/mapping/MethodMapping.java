@@ -21,49 +21,72 @@ public class MethodMapping {
     private boolean isJson;
     private boolean isAuthRequired;
     private String[] authorizeRoles;
-    
+    private Object controllerInstance;
+
+    public Object getControllerInstance() {
+        return controllerInstance;
+    }
+
+    public void setControllerInstance(Object controllerInstance) {
+        this.controllerInstance = controllerInstance;
+    }
+
     public String[] getAuthorizeRoles() {
         return authorizeRoles;
     }
+
     public void setAuthorizeRoles(String[] authorizeRoles) {
         this.authorizeRoles = authorizeRoles;
     }
+
     public boolean isAuthRequired() {
         return isAuthRequired;
     }
+
     public void setAuthRequired(boolean isAuthRequired) {
         this.isAuthRequired = isAuthRequired;
     }
+
     public boolean isJson() {
         return isJson;
     }
+
     public void setJson(boolean isJson) {
         this.isJson = isJson;
     }
+
     public Class<?> getControllerClass() {
         return controllerClass;
     }
+
     public void setControllerClass(Class<?> controllerClass) {
         this.controllerClass = controllerClass;
     }
+
     public String getPathToFile() {
         return pathToFile;
     }
+
     public void setPathToFile(String pathToFile) {
         this.pathToFile = pathToFile;
     }
+
     public Method getMethod() {
         return method;
     }
+
     public void setMethod(Method method) {
         this.method = method;
     }
+
     public HTTPMethode getHttpMethode() {
         return httpMethode;
     }
+
     public void setHttpMethode(HTTPMethode httpMethode) {
         this.httpMethode = httpMethode;
     }
+
     public Object executeMethod(HttpServletRequest request, HttpServletResponse response) {
         try {
             if (method.isAnnotationPresent(Auth.class)) {
@@ -73,7 +96,7 @@ public class MethodMapping {
                 Session session = new Session(request);
                 String userRole = session.getRole();
                 boolean authorized = false;
-                
+
                 for (String role : roles) {
                     if (role.contains(userRole)) {
                         authorized = true;
@@ -81,11 +104,11 @@ public class MethodMapping {
                     }
                 }
                 if (!authorized) {
-                    throw new AuthException("User is not authorized to access this resource",403);
+                    throw new AuthException("User is not authorized to access this resource", 403);
                 }
             }
             Object[] args = mg.sprintlab.utils.ClassParmScanner.getMethodArgs(method, request, response);
-            return method.invoke(controllerClass.getDeclaredConstructor().newInstance(), args);
+            return method.invoke(controllerInstance, args);
         } catch (AuthException e) {
             throw e;
         } catch (InvocationTargetException e) {
@@ -96,7 +119,8 @@ public class MethodMapping {
             throw new RuntimeException("Failed to execute method: " + method.getName()
                     + " in controller: " + controllerClass.getName() + " - " + cause.getMessage(), cause);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to execute method: " + method.getName() + " in controller: " + controllerClass.getName() + " - " + e.getMessage(), e);
+            throw new RuntimeException("Failed to execute method: " + method.getName() + " in controller: "
+                    + controllerClass.getName() + " - " + e.getMessage(), e);
         }
     }
 
@@ -106,7 +130,7 @@ public class MethodMapping {
         sb.append("Path to File: ").append(pathToFile).append("\n");
         sb.append("Method: ").append(method.getName()).append("\n");
         sb.append("HTTP Method: ").append(httpMethode).append("\n");
-        String jsonstate = isJson ? " Active ": "";
+        String jsonstate = isJson ? " Active " : "";
         sb.append("REST Status:").append(jsonstate).append("\n");
         // list all methods of the controller class
         sb.append("Methods in Controller Class: \n");
@@ -116,6 +140,7 @@ public class MethodMapping {
 
         return sb.toString();
     }
+
     @Override
     public String toString() {
         return debugLog();

@@ -29,23 +29,37 @@ public class AppInitializer implements ServletContextListener {
     public static final String VIEW_DISPATCHER = "view_dispatcher";
     public static final String JSON_CONVERTOR = "json_convertor";
     public static final String UPLOAD_DIRECTORY_PARAM = "upload_directory";
+    public static final String CONTROLLER_REGISTRY = "controller_registry";
+
     @Override
     public void contextInitialized(ServletContextEvent event) {
         ServletContext context = event.getServletContext();
 
         FileMapping.configureUploadDirectory(context.getInitParameter(UPLOAD_DIRECTORY_PARAM));
-        context.setAttribute(LIST_CLASS, getControllerClassList(context));
+        // context.setAttribute(LIST_CLASS, getControllerClassList(context));
         String configuredDebugMode = context.getInitParameter(DEBUG_MODE_PARAM);
         context.setAttribute(
                 DEBUG_MODE_PARAM,
                 configuredDebugMode != null && Boolean.parseBoolean(configuredDebugMode.trim()));
 
+        // Map<UrlInfo, MethodMapping> routesMapping = new HashMap<>();
+
+        // List<Class<?>> uniqueClassList = getControllerClassList(context);
+        // RouteMapping.scanAndBuildMapping(routesMapping, uniqueClassList);
+        // context.setAttribute(ROUTE_MAPPER, routesMapping);
+
+        // Initialize the controller registry
+        List<Class<?>> controllers = getControllerClassList(context);
+        context.setAttribute(LIST_CLASS, controllers);
+
+        ControllerRegistry registry = new ControllerRegistry(controllers);
+        context.setAttribute(CONTROLLER_REGISTRY, registry);
+
         Map<UrlInfo, MethodMapping> routesMapping = new HashMap<>();
-
-        List<Class<?>> uniqueClassList = getControllerClassList(context);
-        RouteMapping.scanAndBuildMapping(routesMapping, uniqueClassList);
+        RouteMapping.scanAndBuildMapping(routesMapping, controllers, registry);
         context.setAttribute(ROUTE_MAPPER, routesMapping);
-
+        
+        // initialize the JSON convertor
         context.setAttribute(JSON_CONVERTOR, new JsonConvertor());
 
         // Initialize the view dispatcher

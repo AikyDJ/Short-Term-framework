@@ -4,6 +4,7 @@ import mg.sprintlab.annotation.Auth;
 import mg.sprintlab.annotation.MapUrl;
 import mg.sprintlab.annotation.RequestBody;
 import mg.sprintlab.annotation.enums.HTTPMethode;
+import mg.sprintlab.core.ControllerRegistry;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -13,7 +14,8 @@ public class RouteMapping {
     private RouteMapping() {
     }
 
-    public static void scanAndBuildMapping(Map<UrlInfo, MethodMapping> routeMapper, List<Class<?>> controllerList) {
+    public static void scanAndBuildMapping(Map<UrlInfo, MethodMapping> routeMapper,
+            List<Class<?>> controllerList, ControllerRegistry registry) {
         for (Class<?> controller : controllerList) {
             Method[] methods = controller.getDeclaredMethods();
             for (Method toAnalyze : methods) {
@@ -25,23 +27,24 @@ public class RouteMapping {
                     boolean isJson = toAnalyze.isAnnotationPresent(RequestBody.class);
                     boolean isAuthRequired = toAnalyze.isAnnotationPresent(Auth.class);
                     String[] authorizeRoles = new String[0];
-                    
+
                     if (isAuthRequired) {
                         Auth authAn = toAnalyze.getAnnotation(Auth.class);
                         authorizeRoles = authAn.roles();
                     }
-                    routeMapper.put(new UrlInfo(path, urlMethod), buildMapping(toAnalyze, controller, path, urlMethod
-                        ,isJson
-                        ,isAuthRequired
-                        ,authorizeRoles
-                    ));
+
+                    MethodMapping mapping = buildMapping(toAnalyze, controller, path, urlMethod,
+                            isJson, isAuthRequired, authorizeRoles);
+                    mapping.setControllerInstance(registry.get(controller));
+                    routeMapper.put(new UrlInfo(path, urlMethod), mapping);
 
                 }
             }
         }
     }
 
-    public static MethodMapping buildMapping(Method method, Class<?> controller, String path, HTTPMethode urlMethod,boolean isJson, boolean isAuthRequired, String[] authorizeRoles) {
+    public static MethodMapping buildMapping(Method method, Class<?> controller, String path, HTTPMethode urlMethod,
+            boolean isJson, boolean isAuthRequired, String[] authorizeRoles) {
         MethodMapping methodMap = new MethodMapping();
         methodMap.setControllerClass(controller);
         methodMap.setPathToFile(path);
