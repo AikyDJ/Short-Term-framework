@@ -24,8 +24,8 @@ public class MainController extends HttpServlet {
     private ViewDispach viewDispatcher;
     private boolean debugMode;
     private JsonConvertor jsonConvertor;
-
     private String sessionStringAttr = AppInitializer.SESSION_ATTRIBUTE;
+    
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // GET
@@ -47,6 +47,7 @@ public class MainController extends HttpServlet {
     }
 
     @Override
+    @SuppressWarnings ("unchecked")
     public void init() throws ServletException {
         routesMapping = (Map<UrlInfo, MethodMapping>) getServletContext().getAttribute(AppInitializer.ROUTE_MAPPER);
         viewDispatcher = (ViewDispach) getServletContext().getAttribute(AppInitializer.VIEW_DISPATCHER);
