@@ -6,6 +6,7 @@ import mg.sprintlab.annotation.enums.HTTPMethode;
 import mg.sprintlab.core.AppInitializer;
 import mg.sprintlab.core.mapping.MethodMapping;
 import mg.sprintlab.core.mapping.UrlInfo;
+import mg.sprintlab.exception.AuthException;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -58,46 +59,49 @@ public class MainController extends HttpServlet {
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    request.setCharacterEncoding("UTF-8");
-    String path = UrlUtils.normalize(request.getRequestURI().substring(request.getContextPath().length()));
+        request.setCharacterEncoding("UTF-8");
+        String path = UrlUtils.normalize(request.getRequestURI().substring(request.getContextPath().length()));
 
-    if (debugMode) {
-        response.setContentType("text/plain;charset=UTF-8");
-        debug(path, request, response);
-    }
-
-    HTTPMethode httpMethode;
-    try {
-        httpMethode = HTTPMethode.valueOf(request.getMethod().toUpperCase());
-    } catch (IllegalArgumentException e) {
-        response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, request.getMethod());
-        return;
-    }
-
-    MethodMapping methodMapping = routesMapping.get(new UrlInfo(path, httpMethode));
-    if (methodMapping == null) {
-        response.sendError(HttpServletResponse.SC_NOT_FOUND,
-                "No route for " + request.getMethod() + " " + path);
-        return;
-    }
-
-    try {
-        Object viewresp = methodMapping.executeMethod(request, response);
-        if (methodMapping.isJson()) {
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().println(jsonConvertor.toJson(viewresp));
-        } else if (viewresp instanceof ModelView m) {
-            viewDispatcher.render(m, request, response);
-        } else if (viewresp instanceof String s) {
-            viewDispatcher.render(new ModelView(s), request, response);
+        if (debugMode) {
+            response.setContentType("text/plain;charset=UTF-8");
+            debug(path, request, response);
         }
-    } catch (Exception e) {
-        log("Error while processing request", e);
-        if (!response.isCommitted()) {
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+
+        HTTPMethode httpMethode;
+        try {
+            httpMethode = HTTPMethode.valueOf(request.getMethod().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, request.getMethod());
+            return;
+        }
+
+        MethodMapping methodMapping = routesMapping.get(new UrlInfo(path, httpMethode));
+        if (methodMapping == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                    "No route for " + request.getMethod() + " " + path);
+            return;
+        }
+
+        try {
+
+            Object viewresp = methodMapping.executeMethod(request, response);
+
+
+            if (methodMapping.isJson()) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().println(jsonConvertor.toJson(viewresp));
+            } else if (viewresp instanceof ModelView m) {
+                viewDispatcher.render(m, request, response);
+            } else if (viewresp instanceof String s) {
+                viewDispatcher.render(new ModelView(s), request, response);
+            }
+        } catch (Exception e) {
+            log("Error while processing request", e);
+            if (!response.isCommitted()) {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            }
         }
     }
-}
 
     private void debug(String path, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
