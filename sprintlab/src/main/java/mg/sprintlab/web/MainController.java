@@ -2,18 +2,22 @@ package mg.sprintlab.web;
 
 import mg.sprintlab.utils.UrlUtils;
 import mg.sprintlab.utils.JsonConvertor;
+import mg.sprintlab.annotation.enums.HTTPMethode;
 import mg.sprintlab.core.AppInitializer;
 import mg.sprintlab.core.mapping.MethodMapping;
 import mg.sprintlab.core.mapping.UrlInfo;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 public class MainController extends HttpServlet {
 
@@ -43,6 +47,7 @@ public class MainController extends HttpServlet {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void init() throws ServletException {
         routesMapping = (Map<UrlInfo, MethodMapping>) getServletContext().getAttribute(AppInitializer.ROUTE_MAPPER);
         viewDispatcher = (ViewDispach) getServletContext().getAttribute(AppInitializer.VIEW_DISPATCHER);
@@ -53,28 +58,46 @@ public class MainController extends HttpServlet {
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String path = UrlUtils.normalize(request.getRequestURI().substring(request.getContextPath().length()));
-        if (debugMode) {
-            response.setContentType("text/plain;charset=UTF-8");
-            debug(path, request, response);
-        }
-        //
-        UrlInfo urlInfo = new UrlInfo(path, null);
-        if (routesMapping.containsKey(urlInfo)) {
-            MethodMapping methodMapping = routesMapping.get(urlInfo);
-            Object viewresp = methodMapping.executeMethod(request, response);
-            if (methodMapping.isJson()) {
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().println(jsonConvertor.toJson(viewresp));
-            } else if (viewresp instanceof ModelView m) {
-                viewDispatcher.render(m, request, response);
-            } else if (viewresp instanceof String s) {
-                viewDispatcher.render(new ModelView(s), request, response);
-            }
+    request.setCharacterEncoding("UTF-8");
+    String path = UrlUtils.normalize(request.getRequestURI().substring(request.getContextPath().length()));
 
-        }
-
+    if (debugMode) {
+        response.setContentType("text/plain;charset=UTF-8");
+        debug(path, request, response);
     }
+
+    HTTPMethode httpMethode;
+    try {
+        httpMethode = HTTPMethode.valueOf(request.getMethod().toUpperCase());
+    } catch (IllegalArgumentException e) {
+        response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, request.getMethod());
+        return;
+    }
+
+    MethodMapping methodMapping = routesMapping.get(new UrlInfo(path, httpMethode));
+    if (methodMapping == null) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                "No route for " + request.getMethod() + " " + path);
+        return;
+    }
+
+    try {
+        Object viewresp = methodMapping.executeMethod(request, response);
+        if (methodMapping.isJson()) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().println(jsonConvertor.toJson(viewresp));
+        } else if (viewresp instanceof ModelView m) {
+            viewDispatcher.render(m, request, response);
+        } else if (viewresp instanceof String s) {
+            viewDispatcher.render(new ModelView(s), request, response);
+        }
+    } catch (Exception e) {
+        log("Error while processing request", e);
+        if (!response.isCommitted()) {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+}
 
     private void debug(String path, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -84,6 +107,7 @@ public class MainController extends HttpServlet {
         try (PrintWriter out = response.getWriter()) {
             out.println("\nRequested Path: " + path);
             out.println("Mapped Methods:");
+            out.println("-------------------------------");
             for (Map.Entry<UrlInfo, MethodMapping> entry : mappings.entrySet()) {
                 UrlInfo urlInfo = entry.getKey();
                 MethodMapping methodMapping = entry.getValue();

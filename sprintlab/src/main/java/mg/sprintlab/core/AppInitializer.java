@@ -29,7 +29,6 @@ public class AppInitializer implements ServletContextListener {
     public static final String VIEW_DISPATCHER = "view_dispatcher";
     public static final String JSON_CONVERTOR = "json_convertor";
     public static final String UPLOAD_DIRECTORY_PARAM = "upload_directory";
-
     @Override
     public void contextInitialized(ServletContextEvent event) {
         ServletContext context = event.getServletContext();
@@ -53,8 +52,8 @@ public class AppInitializer implements ServletContextListener {
         String suffix = context.getInitParameter("view_suffix");
         String prefix = context.getInitParameter("view_prefix");
         ViewDispach viewDispatcher = new ViewDispach();
-        viewDispatcher.setSuffix(suffix);
-        viewDispatcher.setPrefix(prefix);
+        viewDispatcher.setSuffix(suffix == null ? ".jsp" : suffix);
+        viewDispatcher.setPrefix(prefix == null ? "WEB-INF/pages/" : prefix);
         context.setAttribute(VIEW_DISPATCHER, viewDispatcher);
     }
 
