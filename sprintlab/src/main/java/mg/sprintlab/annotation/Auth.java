@@ -8,5 +8,5 @@ import java.lang.annotation.RetentionPolicy;
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Auth {
-String [] roles() default {"ADMIN", "USER"};
+String [] roles() default {"USER"};
 }

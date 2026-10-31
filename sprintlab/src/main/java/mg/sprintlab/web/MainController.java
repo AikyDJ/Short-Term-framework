@@ -86,10 +86,6 @@ public class MainController extends HttpServlet {
 
             Object viewresp = methodMapping.executeMethod(request, response);
 
-            if (methodMapping.isAuthRequired()) {
-                throw new AuthException("Authentication required for this route.");
-            }
-
             if (methodMapping.isJson()) {
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().println(jsonConvertor.toJson(viewresp));
@@ -100,8 +96,9 @@ public class MainController extends HttpServlet {
             }
         } catch (Exception e) {
             log("Error while processing request", e);
-            if (e.getClass().equals(AuthException.class)) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+            if (e instanceof AuthException authException) {
+                response.sendError(authException.getErrorCode(), authException.getMessage());
+                return;
             }
             if (!response.isCommitted()) {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());

@@ -23,7 +23,19 @@ import jakarta.servlet.http.HttpSession;
  */
 public class Session {
 
+    private static final String ROLE_ATTRIBUTE = "role";
+    private static final String DEFAULT_ROLE = "USER";
+
     private final HttpServletRequest request;
+
+    public String getRole() {
+        String role = getAttribute(ROLE_ATTRIBUTE, String.class);
+        return role == null ? DEFAULT_ROLE : role;
+    }
+
+    public void setRole(String role) {
+        setAttribute(ROLE_ATTRIBUTE, role);
+    }
 
     public Session(HttpServletRequest request) {
         this.request = Objects.requireNonNull(request, "request");
